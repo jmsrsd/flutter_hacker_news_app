@@ -1,0 +1,1 @@
+typedef Stories = List<int>;
