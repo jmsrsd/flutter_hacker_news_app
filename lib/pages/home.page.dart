@@ -1,7 +1,8 @@
-import 'dart:convert';
-
 import 'package:flutter/material.dart';
+import 'package:flutter_hacker_news_app/api/item/item.api.request.dart';
+import 'package:flutter_hacker_news_app/api/item/item.api.response.dart';
 import 'package:flutter_hacker_news_app/api/stories.api.dart';
+import 'package:flutter_hacker_news_app/components/item.component.dart';
 import 'package:flutter_hacker_news_app/models/item/item.model.dart';
 import 'package:flutter_hacker_news_app/utils/cache.dart';
 import 'package:flutter_hacker_news_app/utils/uncatch.dart';
@@ -13,6 +14,87 @@ import '../models/stories/stories.model.dart';
 import '../utils/api.dart';
 import '../utils/with_separator.dart';
 
+class MyHomePageTabBarView extends HookWidget {
+  final Map<String, List<int>> storiesCache = {};
+  final Map<int, ItemResponse> itemCache = {};
+  final StoriesRequest request;
+
+  MyHomePageTabBarView({
+    super.key,
+    required this.request,
+  });
+
+  @override
+  Widget build(context) {
+    final stories = useAsync([request.endpoint], () async {
+      final data = storiesCache[request.endpoint];
+      if (data != null) return data;
+      storiesCache[request.endpoint] = await request.get();
+      return storiesCache[request.endpoint];
+    });
+    final ids = stories.data ?? [];
+    final items = ids.map((id) {
+      return HookBuilder(
+        key: ValueKey(id),
+        builder: (context) {
+          final item = useAsync([id], () async {
+            final data = itemCache[id];
+            if (data != null) return data;
+            itemCache[id] = await ItemRequest.get(id);
+            return itemCache[id];
+          });
+          final data = item.data;
+          return data == null
+              ? const ListTile(
+                  isThreeLine: true,
+                  leading: CircleAvatar(
+                    backgroundColor: Colors.transparent,
+                    child: CircularProgressIndicator(),
+                  ),
+                  title: Text(''),
+                  subtitle: Text(''),
+                )
+              : Item(
+                  key: ValueKey(id),
+                  data: data,
+                  onTap: data.url == null
+                      ? null
+                      : () {
+                          uncatch(() async {
+                            await launchUrl(
+                              Uri.parse('${data.url}'),
+                              mode: LaunchMode.externalApplication,
+                            );
+                          });
+                          item.refresh();
+                        },
+                );
+        },
+      );
+    }).toList();
+
+    if (!stories.hasLoaded) {
+      return const Center(
+        child: CircularProgressIndicator(),
+      );
+    }
+
+    return RefreshIndicator(
+      onRefresh: () async {
+        storiesCache.clear();
+        itemCache.clear();
+        stories.refresh();
+      },
+      child: ListView.builder(
+        itemCount: items.length,
+        itemBuilder: (context, index) {
+          return items[index];
+        },
+      ),
+    );
+  }
+}
+
 class MyHomePage extends HookWidget {
   const MyHomePage({
     super.key,
@@ -23,44 +105,35 @@ class MyHomePage extends HookWidget {
 
   @override
   Widget build(BuildContext context) {
+    final tabs = {
+      'TOP': MyHomePageTabBarView(
+        key: const ValueKey('top'),
+        request: StoriesRequest.top(),
+      ),
+      'NEW': MyHomePageTabBarView(
+        key: const ValueKey('new'),
+        request: StoriesRequest.newOrLatest(),
+      ),
+      'BEST': MyHomePageTabBarView(
+        key: const ValueKey('best'),
+        request: StoriesRequest.best(),
+      ),
+    };
+
     return DefaultTabController(
-      length: 3,
+      length: tabs.length,
       child: Scaffold(
         appBar: AppBar(
           title: Text(title),
           bottom: TabBar(
             labelColor: Theme.of(context).colorScheme.onSurface,
-            tabs: const [
-              Tab(text: 'TOP'),
-              Tab(text: 'NEW'),
-              Tab(text: 'BEST'),
-            ],
+            tabs: List.of(
+              tabs.keys.map((e) => Tab(text: e)),
+            ),
           ),
         ),
         body: TabBarView(
-          children: [
-            HookBuilder(
-                key: const ValueKey('top'),
-                builder: (context) {
-                  final request = useAsync(['top'], StoriesRequest.top().get);
-                  final isLoading = !request.hasLoaded;
-                  final data = request.data ?? [];
-                  return isLoading
-                      ? const Center(
-                          child: CircularProgressIndicator(),
-                        )
-                      : ListView.builder(
-                          itemCount: data.length,
-                          itemBuilder: ((context, index) {
-                            return ListTile(
-                              title: Text(data[index].toString()),
-                            );
-                          }),
-                        );
-                }),
-            const Text('NEW'),
-            const Text('BEST'),
-          ],
+          children: List.of(tabs.values),
         ),
       ),
     );
@@ -69,14 +142,13 @@ class MyHomePage extends HookWidget {
 
 class _MyHomePage extends HookWidget {
   const _MyHomePage({
-    super.key,
     required this.title,
   });
 
   final String title;
 
   static final _cachedStories = Cache<Stories>();
-  static final _cachedItems = Cache<Item>();
+  static final _cachedItems = Cache<ItemModel>();
 
   @override
   Widget build(BuildContext context) {

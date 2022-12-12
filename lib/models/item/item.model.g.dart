@@ -6,7 +6,7 @@ part of 'item.model.dart';
 // JsonSerializableGenerator
 // **************************************************************************
 
-_$_Item _$$_ItemFromJson(Map<String, dynamic> json) => _$_Item(
+_$_ItemModel _$$_ItemModelFromJson(Map<String, dynamic> json) => _$_ItemModel(
       id: json['id'] as int? ?? null,
       deleted: json['deleted'] as bool? ?? null,
       type: json['type'] as String? ?? null,
@@ -26,7 +26,8 @@ _$_Item _$$_ItemFromJson(Map<String, dynamic> json) => _$_Item(
       descendant: json['descendant'] as int? ?? null,
     );
 
-Map<String, dynamic> _$$_ItemToJson(_$_Item instance) => <String, dynamic>{
+Map<String, dynamic> _$$_ItemModelToJson(_$_ItemModel instance) =>
+    <String, dynamic>{
       'id': instance.id,
       'deleted': instance.deleted,
       'type': instance.type,

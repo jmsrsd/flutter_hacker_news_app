@@ -6,10 +6,10 @@ import 'package:http/http.dart' as http;
 class Api {
   Api._();
 
-  static Future<Item> item({
+  static Future<ItemModel> item({
     required int id,
   }) async {
-    return Item.fromJson(await _JsonApi('item/$id.json').get());
+    return ItemModel.fromJson(await _JsonApi('item/$id.json').get());
   }
 
   static Future<Map<String, dynamic>> user({

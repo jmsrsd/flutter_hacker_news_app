@@ -1,25 +1,33 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_hacker_news_app/api/item.api.dart';
-import 'package:flutter_hacker_news_app/hooks/async.hook.dart';
+import 'package:flutter_hacker_news_app/api/item/item.api.response.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 
 class Item extends HookWidget {
-  final int id;
+  final ItemResponse data;
+  final void Function()? onTap;
 
-  const Item({super.key, required this.id});
+  const Item({
+    super.key,
+    required this.data,
+    this.onTap,
+  });
 
   @override
   Widget build(context) {
-    final response = useAsync([id], () {
-      return ItemRequest.get(id);
-    });
-
     return ListTile(
-      leading: CircleAvatar(
-        backgroundColor: Colors.transparent,
-        child: response.hasLoaded
-            ? Text(response.data?.score.toString() ?? '-')
-            : const CircularProgressIndicator(),
+      onTap: onTap,
+      isThreeLine: true,
+      title: Text(data.title ?? ''),
+      subtitle: Text(
+        [
+          [
+            '${data.score ?? '...'}',
+            'points',
+            'by',
+            data.by,
+          ].map((e) => e.trim()).join(' '),
+          data.url ?? '',
+        ].join('\n'),
       ),
     );
   }

@@ -4,8 +4,8 @@ part 'item.model.freezed.dart';
 part 'item.model.g.dart';
 
 @freezed
-class Item with _$Item {
-  factory Item({
+class ItemModel with _$ItemModel {
+  factory ItemModel({
     @Default(null) int? id,
     @Default(null) bool? deleted,
     @Default(null) String? type,
@@ -21,7 +21,8 @@ class Item with _$Item {
     @Default(null) String? title,
     @Default(null) List<int>? parts,
     @Default(null) int? descendant,
-  }) = _Item;
+  }) = _ItemModel;
 
-  factory Item.fromJson(Map<String, dynamic> json) => _$ItemFromJson(json);
+  factory ItemModel.fromJson(Map<String, dynamic> json) =>
+      _$ItemModelFromJson(json);
 }
