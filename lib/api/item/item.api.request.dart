@@ -3,7 +3,6 @@ import 'dart:convert';
 import 'package:http/http.dart' as http;
 
 import 'item.api.response.dart';
-import 'item.api.response.type.dart';
 
 class ItemRequest {
   ItemRequest._();
