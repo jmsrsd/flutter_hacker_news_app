@@ -1,17 +1,74 @@
+import 'dart:convert';
+
 import 'package:flutter/material.dart';
+import 'package:flutter_hacker_news_app/api/stories.api.dart';
 import 'package:flutter_hacker_news_app/models/item/item.model.dart';
 import 'package:flutter_hacker_news_app/utils/cache.dart';
 import 'package:flutter_hacker_news_app/utils/uncatch.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:url_launcher/url_launcher.dart';
 
-import '../hooks/fetch.hook.dart';
+import '../hooks/async.hook.dart';
 import '../models/stories/stories.model.dart';
 import '../utils/api.dart';
 import '../utils/with_separator.dart';
 
 class MyHomePage extends HookWidget {
   const MyHomePage({
+    super.key,
+    required this.title,
+  });
+
+  final String title;
+
+  @override
+  Widget build(BuildContext context) {
+    return DefaultTabController(
+      length: 3,
+      child: Scaffold(
+        appBar: AppBar(
+          title: Text(title),
+          bottom: TabBar(
+            labelColor: Theme.of(context).colorScheme.onSurface,
+            tabs: const [
+              Tab(text: 'TOP'),
+              Tab(text: 'NEW'),
+              Tab(text: 'BEST'),
+            ],
+          ),
+        ),
+        body: TabBarView(
+          children: [
+            HookBuilder(
+                key: const ValueKey('top'),
+                builder: (context) {
+                  final request = useAsync(['top'], StoriesRequest.top().get);
+                  final isLoading = request.isLoading;
+                  final data = request.value.data ?? [];
+                  return isLoading
+                      ? const Center(
+                          child: CircularProgressIndicator(),
+                        )
+                      : ListView.builder(
+                          itemCount: data.length,
+                          itemBuilder: ((context, index) {
+                            return ListTile(
+                              title: Text(data[index].toString()),
+                            );
+                          }),
+                        );
+                }),
+            const Text('NEW'),
+            const Text('BEST'),
+          ],
+        ),
+      ),
+    );
+  }
+}
+
+class _MyHomePage extends HookWidget {
+  const _MyHomePage({
     super.key,
     required this.title,
   });
@@ -25,7 +82,7 @@ class MyHomePage extends HookWidget {
   Widget build(BuildContext context) {
     final storiesFetcher = useState(Api.topStories);
     final fetchStories = storiesFetcher.value;
-    final storiesFetch = useFetch([
+    final storiesFetch = useAsync([
       fetchStories,
       _cachedStories.isAbsent([fetchStories]),
     ], () async {
@@ -33,7 +90,7 @@ class MyHomePage extends HookWidget {
         _cachedStories.set([fetchStories], await fetchStories());
       }
       return _cachedStories.get([fetchStories]) ?? <int>[];
-    }, onRefetch: () {
+    }, onRefresh: () {
       _cachedStories.invalidate([fetchStories]);
     });
 
@@ -42,7 +99,7 @@ class MyHomePage extends HookWidget {
         actions: [
           IconButton(
             tooltip: 'Refresh',
-            onPressed: storiesFetch.refetch,
+            onPressed: storiesFetch.refresh,
             icon: const Icon(Icons.refresh),
           ),
         ].map((e) {
@@ -80,7 +137,7 @@ class MyHomePage extends HookWidget {
                         ? null
                         : () {
                             storiesFetcher.value = e.value;
-                            storiesFetch.refetch();
+                            storiesFetch.refresh();
                           },
                     child: Text(e.key),
                   );
@@ -91,16 +148,16 @@ class MyHomePage extends HookWidget {
         ),
       ),
       body: Builder(builder: (context) {
-        if (storiesFetch.isFetching) {
+        if (storiesFetch.isLoading) {
           return const Center(
             child: CircularProgressIndicator(),
           );
         }
 
-        final ids = storiesFetch.fetched.data ?? [];
+        final ids = storiesFetch.value.data ?? [];
         return RefreshIndicator(
           onRefresh: () async {
-            storiesFetch.refetch();
+            storiesFetch.refresh();
           },
           child: ListView.builder(
             padding: const EdgeInsets.only(
@@ -112,7 +169,7 @@ class MyHomePage extends HookWidget {
               return HookBuilder(
                 builder: (context) {
                   final id = ids.elementAt(index);
-                  final fetch = useFetch([
+                  final fetch = useAsync([
                     id,
                     _cachedItems.isAbsent([id]),
                   ], () async {
@@ -120,10 +177,10 @@ class MyHomePage extends HookWidget {
                       _cachedItems.set([id], await Api.item(id: id));
                     }
                     return _cachedItems.get([id]);
-                  }, onRefetch: () {
+                  }, onRefresh: () {
                     _cachedItems.invalidate([id]);
                   });
-                  final item = fetch.fetched.data;
+                  final item = fetch.value.data;
                   final itemTime = DateTime.fromMillisecondsSinceEpoch(
                     (item?.time ?? 0) * 1000,
                   );
@@ -138,12 +195,12 @@ class MyHomePage extends HookWidget {
                           mode: LaunchMode.externalApplication,
                         );
                       });
-                      fetch.refetch();
+                      fetch.refresh();
                     },
                     leading: AspectRatio(
                       aspectRatio: 1.0,
                       child: Center(
-                        child: fetch.isFetching
+                        child: fetch.isLoading
                             ? const SizedBox.square(
                                 dimension: 24,
                                 child: CircularProgressIndicator(),
@@ -151,9 +208,9 @@ class MyHomePage extends HookWidget {
                             : Text('${item?.score}'),
                       ),
                     ),
-                    title: Text(fetch.isFetching ? '' : '${item?.title}'),
+                    title: Text(fetch.isLoading ? '' : '${item?.title}'),
                     subtitle: Text(
-                      fetch.isFetching
+                      fetch.isLoading
                           ? ''
                           : [
                               '${item?.by}',
