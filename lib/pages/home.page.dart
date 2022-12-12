@@ -43,8 +43,8 @@ class MyHomePage extends HookWidget {
                 key: const ValueKey('top'),
                 builder: (context) {
                   final request = useAsync(['top'], StoriesRequest.top().get);
-                  final isLoading = request.isLoading;
-                  final data = request.value.data ?? [];
+                  final isLoading = !request.hasLoaded;
+                  final data = request.data ?? [];
                   return isLoading
                       ? const Center(
                           child: CircularProgressIndicator(),
@@ -148,13 +148,13 @@ class _MyHomePage extends HookWidget {
         ),
       ),
       body: Builder(builder: (context) {
-        if (storiesFetch.isLoading) {
+        if (!storiesFetch.hasLoaded) {
           return const Center(
             child: CircularProgressIndicator(),
           );
         }
 
-        final ids = storiesFetch.value.data ?? [];
+        final ids = storiesFetch.data ?? [];
         return RefreshIndicator(
           onRefresh: () async {
             storiesFetch.refresh();
@@ -180,7 +180,7 @@ class _MyHomePage extends HookWidget {
                   }, onRefresh: () {
                     _cachedItems.invalidate([id]);
                   });
-                  final item = fetch.value.data;
+                  final item = fetch.data;
                   final itemTime = DateTime.fromMillisecondsSinceEpoch(
                     (item?.time ?? 0) * 1000,
                   );
@@ -200,7 +200,7 @@ class _MyHomePage extends HookWidget {
                     leading: AspectRatio(
                       aspectRatio: 1.0,
                       child: Center(
-                        child: fetch.isLoading
+                        child: !fetch.hasLoaded
                             ? const SizedBox.square(
                                 dimension: 24,
                                 child: CircularProgressIndicator(),
@@ -208,9 +208,9 @@ class _MyHomePage extends HookWidget {
                             : Text('${item?.score}'),
                       ),
                     ),
-                    title: Text(fetch.isLoading ? '' : '${item?.title}'),
+                    title: Text(!fetch.hasLoaded ? '' : '${item?.title}'),
                     subtitle: Text(
-                      fetch.isLoading
+                      !fetch.hasLoaded
                           ? ''
                           : [
                               '${item?.by}',
