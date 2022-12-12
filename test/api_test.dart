@@ -13,10 +13,10 @@ import 'utils.dart';
 
 void main() {
   runTests({
-    'API': {
-      'Item': {
-        'GET': {
-          'Part of Poll': () async {
+    ['API']: {
+      ['Item']: {
+        ['GET']: {
+          ['Poll', 'Part']: () async {
             final response = await ItemRequest.get(160705);
 
             final by = response.by;
@@ -40,7 +40,7 @@ void main() {
             expect(time.millisecondsSinceEpoch, equals(1207886576 * 1000));
             expect(type, equals(ItemType.pollopt));
           },
-          'Poll': () async {
+          ['Poll']: () async {
             final response = await ItemRequest.get(126809);
 
             final by = response.by;
@@ -70,7 +70,7 @@ void main() {
             );
             expect(type, equals(ItemType.poll));
           },
-          'Job': () async {
+          ['Job']: () async {
             final response = await ItemRequest.get(192327);
 
             final by = response.by;
@@ -99,7 +99,7 @@ void main() {
             expect(type, equals(ItemType.job));
             expect(url, equals(""));
           },
-          'Ask': () async {
+          ['Ask']: () async {
             final response = await ItemRequest.get(121003);
 
             final by = response.by;
@@ -127,7 +127,7 @@ void main() {
             expect(title, equals("Ask HN: The Arc Effect"));
             expect(type, equals(ItemType.story));
           },
-          'Comment': () async {
+          ['Comment']: () async {
             final response = await ItemRequest.get(2921983);
 
             final by = response.by;
@@ -154,7 +154,7 @@ void main() {
             expect(time.millisecondsSinceEpoch, equals(1314211127 * 1000));
             expect(type, equals(ItemType.comment));
           },
-          'Story': () async {
+          ['Story']: () async {
             final response = await ItemRequest.get(8863);
 
             final by = response.by;
@@ -185,8 +185,8 @@ void main() {
           },
         },
       },
-      'User': {
-        'GET': () async {
+      ['User']: {
+        ['GET']: () async {
           final response = await UserRequest.get(userId: 'jl');
           final id = response.id;
           final created = response.created.millisecondsSinceEpoch;
@@ -201,14 +201,14 @@ void main() {
           expect(submitted.runtimeType, equals(List<int>));
         },
       },
-      'Max Item': {
-        'GET': () async {
+      ['Max Item']: {
+        ['GET']: () async {
           final response = await MaxItemRequest.get();
           expect(response.runtimeType, equals(int));
         },
       },
-      'Updates': {
-        'GET': () async {
+      ['Updates']: {
+        ['GET']: () async {
           final response = await UpdatesRequest.get();
           final items = response.items;
           final profiles = response.profiles;
@@ -217,49 +217,49 @@ void main() {
           expect(profiles.runtimeType, equals(List<String>));
         },
       },
-      'Stories': {
-        'Ask': {
-          'GET': () async {
+      ['Stories']: {
+        ['Ask']: {
+          ['GET']: () async {
             final request = StoriesRequest.ask();
             expect(request.endpoint, equals('askstories.json'));
             final response = await request.get();
             expect(response.runtimeType, equals(List<int>));
           },
         },
-        'Show': {
-          'GET': () async {
+        ['Show']: {
+          ['GET']: () async {
             final request = StoriesRequest.show();
             expect(request.endpoint, equals('showstories.json'));
             final response = await request.get();
             expect(response.runtimeType, equals(List<int>));
           },
         },
-        'Job': {
-          'GET': () async {
+        ['Job']: {
+          ['GET']: () async {
             final request = StoriesRequest.job();
             expect(request.endpoint, equals('jobstories.json'));
             final response = await request.get();
             expect(response.runtimeType, equals(List<int>));
           },
         },
-        'Top': {
-          'GET': () async {
+        ['Top']: {
+          ['GET']: () async {
             final request = StoriesRequest.top();
             expect(request.endpoint, equals('topstories.json'));
             final response = await request.get();
             expect(response.runtimeType, equals(List<int>));
           },
         },
-        'New': {
-          'GET': () async {
+        ['New']: {
+          ['GET']: () async {
             final request = StoriesRequest.newOrLatest();
             expect(request.endpoint, equals('newstories.json'));
             final response = await request.get();
             expect(response.runtimeType, equals(List<int>));
           },
         },
-        'Best': {
-          'GET': () async {
+        ['Best']: {
+          ['GET']: () async {
             final request = StoriesRequest.best();
             expect(request.endpoint, equals('beststories.json'));
             final response = await request.get();
