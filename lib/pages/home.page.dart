@@ -55,62 +55,56 @@ class HomePageBody extends HookWidget {
   Widget build(context) {
     final stories = useStories();
     final ids = stories.data ?? [];
-    final items = ids.map((id) {
-      return HookBuilder(
-        key: ValueKey(id),
-        builder: (context) {
-          final item = useItem(id);
-          final data = item.data;
-          return AnimatedSwitcher(
-            duration: const Duration(milliseconds: 300),
-            child: data == null
-                ? const ListTile(
-                    trailing: CircleAvatar(
-                      backgroundColor: Colors.transparent,
-                      child: SizedBox.square(
-                        dimension: 16,
-                        child: CircularProgressIndicator(),
-                      ),
-                    ),
-                    title: Text(''),
-                    subtitle: Text(''),
-                  )
-                : Item(
-                    key: ValueKey(id),
-                    data: data,
-                    onTap: data.url == null
-                        ? null
-                        : () {
-                            uncatch(() async {
-                              await launchUrl(
-                                Uri.parse('${data.url}'),
-                                mode: LaunchMode.externalApplication,
-                              );
-                            });
-                            item.refresh();
-                          },
-                  ),
+    final items = useMemoized(() {
+      return List.of(ids.map((id) {
+        return HookBuilder(
+          key: ValueKey(id),
+          builder: (context) {
+            final item = useItem(id);
+            final data = item.data;
+            return Item(
+              key: ValueKey(id),
+              loading: item.hasLoaded == false,
+              data: data,
+              onTap: data?.url == null
+                  ? null
+                  : () {
+                      uncatch(() async {
+                        await launchUrl(
+                          Uri.parse('${data?.url}'),
+                          mode: LaunchMode.externalApplication,
+                        );
+                      });
+                      item.refresh();
+                    },
+            );
+          },
+        );
+      }));
+    }, [stories.hasLoaded]);
+
+    return AnimatedSwitcher(
+      duration: const Duration(milliseconds: 300),
+      child: evaluate(() {
+        if (!stories.hasLoaded) {
+          return const Align(
+            alignment: Alignment.topCenter,
+            child: LinearProgressIndicator(),
           );
-        },
-      );
-    }).toList();
+        }
 
-    if (!stories.hasLoaded) {
-      return const Center(
-        child: CircularProgressIndicator(),
-      );
-    }
-
-    return RefreshIndicator(
-      onRefresh: () async {
-        stories.refresh();
-      },
-      child: ListView.builder(
-        itemCount: items.length,
-        itemBuilder: (context, index) {
-          return items[index];
-        },
-      ),
+        return RefreshIndicator(
+          onRefresh: () async {
+            stories.refresh();
+          },
+          child: ListView.builder(
+            itemCount: items.length,
+            itemBuilder: (context, index) {
+              return items[index];
+            },
+          ),
+        );
+      }),
     );
   }
 }
@@ -128,15 +122,16 @@ class HomePage extends HookWidget {
     final refreshing = useState(0);
     final storiesCache = useState(<String, List<int>>{});
     final itemCache = useState(<int, ItemResponse>{});
-
-    final tabs = {
-      '📈 TOP': StoriesRequest.top(),
-      '✉️ NEW': StoriesRequest.newOrLatest(),
-      '🏆 BEST': StoriesRequest.best(),
-      '🎁 SHOW': StoriesRequest.show(),
-      '🗣️ ASK': StoriesRequest.ask(),
-      '💼 JOB': StoriesRequest.job(),
-    };
+    final tabs = useMemoized(() {
+      return {
+        '📈 TOP': StoriesRequest.top(),
+        '✉️ NEW': StoriesRequest.newOrLatest(),
+        '🏆 BEST': StoriesRequest.best(),
+        '🎁 SHOW': StoriesRequest.show(),
+        '🗣️ ASK': StoriesRequest.ask(),
+        '💼 JOB': StoriesRequest.job(),
+      };
+    });
 
     return DefaultTabController(
       length: tabs.length,
@@ -175,7 +170,7 @@ class HomePage extends HookWidget {
               tabs.keys.map((e) {
                 return Tab(
                   child: Column(
-                    mainAxisAlignment: MainAxisAlignment.center,
+                    mainAxisAlignment: MainAxisAlignment.end,
                     crossAxisAlignment: CrossAxisAlignment.center,
                     children: evaluate(() {
                       final parts = e.split(' ');
@@ -191,7 +186,8 @@ class HomePage extends HookWidget {
                         Text(
                           label,
                           style: const TextStyle(fontSize: 10),
-                        )
+                        ),
+                        const SizedBox(height: 4),
                       ];
                     }),
                   ),
@@ -200,18 +196,24 @@ class HomePage extends HookWidget {
             ),
           ),
         ),
-        body: TabBarView(
-          key: ValueKey(refreshing.value),
-          children: List.of(
-            tabs.entries.map((e) {
-              return HomePageBody(
-                key: ValueKey(e.key),
-                request: e.value,
-                itemCache: itemCache.value,
-                storiesCache: storiesCache.value,
-              );
-            }),
-          ),
+        body: Builder(
+          builder: (context) {
+            final children = List.of(
+              tabs.entries.map((e) {
+                return HomePageBody(
+                  key: ValueKey(e.key),
+                  request: e.value,
+                  itemCache: itemCache.value,
+                  storiesCache: storiesCache.value,
+                );
+              }),
+            );
+
+            return TabBarView(
+              key: ValueKey(refreshing.value),
+              children: children,
+            );
+          },
         ),
       ),
     );

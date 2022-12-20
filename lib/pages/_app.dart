@@ -11,11 +11,9 @@ class App extends StatelessWidget {
   }
 
   ThemeData useTheme() {
-    var data = ThemeData.light(useMaterial3: true);
-
-    data = data.copyWith(
-      textTheme: useTextTheme(data.textTheme),
-      primaryTextTheme: useTextTheme(data.primaryTextTheme),
+    var data = ThemeData(
+      useMaterial3: true,
+      fontFamily: 'Rubik',
     );
 
     return data;
