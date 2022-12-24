@@ -46,6 +46,8 @@ dependencies:
   hive_flutter: ^1.1.0
   equatable: ^2.0.5
   collection: ^1.16.0
+  uuid: ^3.0.7
+  hooks_riverpod: ^2.1.2
 
 dev_dependencies:
   flutter_test:

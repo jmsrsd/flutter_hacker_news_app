@@ -1,89 +1,107 @@
 import 'package:flutter/foundation.dart';
+import 'package:flutter_hacker_news_app/src/utils/next_tick.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hive_flutter/hive_flutter.dart';
+import 'package:uuid/uuid.dart';
 
 import '../utils/value_coder.dart';
-import 'query_hook.dart';
+import 'swr_hook.dart';
 
-typedef StorageFetcher = Box<String>;
+typedef StorageLoader = Box<String>;
 
-QueryHook<Storage<T>> useStorage<T>(String key, ValueCoder<T> coder) {
-  final refetching = useState(0);
+SWRHook<StorageHook<T>> useStorage<T>(String key, ValueCoder<T> coder) {
+  final reloading = useState(0);
 
-  return useQuery([key, refetching.value], () async {
-    while (Hive.isBoxOpen(key)) {
-      await Future.delayed(Duration.zero);
-    }
+  return useSWR([key, reloading.value], () async {
+    final loader = await Hive.openBox<String>(key);
 
-    final fetcher = await Hive.openBox<String>(key);
-
-    return Storage(
+    return StorageHook<T>(
       key,
-      cache: fetcher.values.map(coder.decode).toList(),
+      cache: loader.values.map(coder.decode).toList(),
       coder: coder,
-      refetching: refetching,
-      fetcher: fetcher,
+      reloading: reloading,
+      loader: loader,
     );
   });
 }
 
-class Storage<T> {
+class StorageHook<T> {
   final String key;
   late final List<T> _cache;
   late final ValueCoder<T> _coder;
-  late final ValueNotifier<int> _refetching;
-  late final StorageFetcher _fetcher;
+  late final ValueNotifier<int>? _reloading;
+  late final StorageLoader _loader;
 
-  Storage(
+  StorageHook(
     this.key, {
     required List<T> cache,
     required ValueCoder<T> coder,
-    required ValueNotifier<int> refetching,
-    required StorageFetcher fetcher,
+    required ValueNotifier<int>? reloading,
+    required StorageLoader loader,
   }) {
     _cache = cache;
     _coder = coder;
-    _refetching = refetching;
-    _fetcher = fetcher;
+    _reloading = reloading;
+    _loader = loader;
   }
 
-  void refetch() {
-    _fetcher.close();
-    _refetching.value += 1;
+  void reload() {
+    _reloading?.value += 1;
   }
 
-  bool get isFetching {
-    return _fetcher.isOpen == false;
+  bool get isLoading {
+    return _loader.isOpen == false;
   }
 
   List<T> getAll() {
-    return isFetching ? _cache : _fetcher.values.map(_coder.decode).toList();
+    return isLoading ? _cache : _loader.values.map(_coder.decode).toList();
   }
 
-  void post(T value) async {
-    while (isFetching) {
-      await Future.delayed(Duration.zero);
+  T? get(String key) {
+    if (isLoading) {
+      return null;
     }
 
-    await _fetcher.add(_coder.encode(value));
-    refetch();
+    try {
+      return _coder.decode(_loader.get(key) ?? '');
+    } catch (e) {
+      return null;
+    }
   }
 
-  void put(int index, T value) async {
-    while (isFetching) {
-      await Future.delayed(Duration.zero);
+  Future<void> post(T value) async {
+    while (isLoading) {
+      await nextTick();
     }
 
-    await _fetcher.putAt(index, _coder.encode(value));
-    refetch();
+    await put(const Uuid().v4(), value);
+    reload();
   }
 
-  void delete(int index) async {
-    while (isFetching) {
-      await Future.delayed(Duration.zero);
+  Future<void> put(String key, T value) async {
+    while (isLoading) {
+      await nextTick();
     }
 
-    await _fetcher.deleteAt(index);
-    refetch();
+    await _loader.put(key, _coder.encode(value));
+    reload();
+  }
+
+  Future<void> delete(String key) async {
+    while (isLoading) {
+      await nextTick();
+    }
+
+    await _loader.delete(key);
+    reload();
+  }
+
+  Future<void> deleteAll() async {
+    while (isLoading) {
+      await nextTick();
+    }
+
+    await _loader.clear();
+    reload();
   }
 }
