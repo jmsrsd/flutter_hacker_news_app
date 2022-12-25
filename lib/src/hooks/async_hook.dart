@@ -1,5 +1,8 @@
+import 'package:equatable/equatable.dart';
 import 'package:flutter/widgets.dart';
 import 'package:flutter_hacker_news_app/src/utils/is_equatable.dart';
+import 'package:flutter_hacker_news_app/src/utils/noop.dart';
+import 'package:flutter_hacker_news_app/src/utils/uncatch.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 
 AsyncHook<T> useAsync<T>(List keys, Future<T> Function() fetcher) {
@@ -19,7 +22,7 @@ AsyncHook<T> useAsync<T>(List keys, Future<T> Function() fetcher) {
   );
 }
 
-class AsyncHook<T> {
+class AsyncHook<T> extends Equatable {
   late final ValueNotifier<int> _invalidation;
   late final AsyncSnapshot<T> _future;
 
@@ -44,10 +47,21 @@ class AsyncHook<T> {
   }
 
   void invalidate() {
+    uncatch(() => _invalidation.value++);
+  }
+
+  bool get isInvalidated {
     try {
-      _invalidation.value++;
+      _invalidation.addListener(noop);
+      _invalidation.removeListener(noop);
+      return false;
     } catch (e) {
-      e;
+      return true;
     }
+  }
+
+  @override
+  List<Object?> get props {
+    return [_future];
   }
 }

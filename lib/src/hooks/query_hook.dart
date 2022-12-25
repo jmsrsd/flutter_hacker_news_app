@@ -1,6 +1,6 @@
 import 'package:flutter_hacker_news_app/src/types/data_source.dart';
 import 'package:flutter_hacker_news_app/src/types/fetcher.dart';
-import 'package:flutter_hacker_news_app/src/utils/delay.dart';
+import 'package:flutter_hacker_news_app/src/utils/next_tick.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 
 import 'async_hook.dart';
@@ -11,7 +11,9 @@ AsyncHook<TO> useQuery<TI, TO>({
   required Fetcher<TI, TO> fetcher,
 }) {
   final autoValidation = useMemoized(() {
-    return _AutoInvalidation()..init();
+    return _AutoInvalidation(
+      duration: const Duration(seconds: 10),
+    )..init();
   }, []);
 
   final hook = useAsync<TO>([input], () async {
@@ -21,7 +23,9 @@ AsyncHook<TO> useQuery<TI, TO>({
     return output;
   });
 
-  autoValidation.add(hook);
+  if (hook.isInvalidated == false) {
+    autoValidation.add(hook);
+  }
 
   return hook;
 }
@@ -29,30 +33,54 @@ AsyncHook<TO> useQuery<TI, TO>({
 class _AutoInvalidation {
   final _queries = <MapEntry<int, AsyncHook>>[];
 
+  final Duration duration;
+
+  _AutoInvalidation({
+    required this.duration,
+  });
+
   void init() async {
-    while (true) {
-      await delay(1);
-
-      final invalids = _queries.where((e) {
-        return e.key <= DateTime.now().millisecondsSinceEpoch;
-      }).where((e) {
-        return e.value.isLoading == false;
-      }).toList();
-
-      for (final invalid in invalids) {
-        final hook = invalid.value;
-        hook.invalidate();
-      }
-
-      _queries.removeWhere((e) {
-        return invalids.map((e) => e.key).contains(e.key);
-      });
+    while (_queries.isEmpty) {
+      await nextTick();
     }
+
+    while (_queries.isNotEmpty) {
+      await nextTick();
+
+      invalidateAll();
+    }
+
+    invalidateAll();
   }
 
   void add(AsyncHook hook) async {
-    const duration = Duration(seconds: 10);
+    if (_queries.map((e) => e.value).contains(hook)) {
+      return;
+    }
+
     final timer = DateTime.now().add(duration).millisecondsSinceEpoch;
     _queries.add(MapEntry(timer, hook));
+  }
+
+  void invalidateAll() {
+    _queries.removeWhere((query) {
+      return query.value.isInvalidated;
+    });
+
+    final invalids = _queries.where((e) {
+      return e.key <= DateTime.now().millisecondsSinceEpoch;
+    }).where((e) {
+      return e.value.isLoading == false;
+    }).toList();
+
+    for (final invalid in invalids) {
+      invalid.value.invalidate();
+    }
+
+    _queries.removeWhere((query) {
+      return invalids.map((invalid) {
+        return invalid.key;
+      }).contains(query.key);
+    });
   }
 }
