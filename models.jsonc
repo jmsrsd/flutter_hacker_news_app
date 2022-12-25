@@ -1,0 +1,40 @@
+[
+    {
+        "__className": "item_model",
+        "__path": "/lib/src/types/item",
+        "by": "dhouston",
+        "descendants": 71,
+        "id": 8863,
+        "kids": [
+            8952,
+            9224,
+            8917
+        ],
+        "url": "",
+        "parts": [
+            126810,
+            126811,
+            126812
+        ],
+        "title": "Poll: What would happen if News.YC had explicit support for polls?",
+        "poll": 160704,
+        "score": 335,
+        "text": "Yes, ban them; I'm tired of seeing Valleywag stories on News.YC.",
+        "time": 1207886576,
+        "type": "pollopt"
+    },
+    {
+        "__className": "user_model",
+        "__path": "/lib/src/types/user",
+        "about": "This is a test",
+        "created": 1173923446,
+        "delay": 0,
+        "id": "jl",
+        "karma": 2937,
+        "submitted": [
+            8265435,
+            8168423,
+            8090946
+        ]
+    }
+]

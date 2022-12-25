@@ -1,8 +1,17 @@
 import 'package:flutter/material.dart';
+import 'package:hive_flutter/hive_flutter.dart';
+import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-import 'pages/_app.dart';
+import 'src/app.dart';
 
-void main() {
+void main() async {
   WidgetsFlutterBinding.ensureInitialized();
-  runApp(const App());
+
+  await Hive.initFlutter();
+
+  runApp(
+    const ProviderScope(
+      child: MyApp(),
+    ),
+  );
 }
