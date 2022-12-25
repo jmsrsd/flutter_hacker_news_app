@@ -2,6 +2,7 @@ import 'package:equatable/equatable.dart';
 
 bool isEquatable(dynamic value) {
   return [
+    value is num,
     value is int,
     value is double,
     value is String,
@@ -16,6 +17,8 @@ bool isEquatable(dynamic value) {
     value is Iterable,
     value is Never,
     value is Equatable,
+    value is Type,
+    value is Comparable,
   ].reduce((v, e) {
     return v || e;
   });

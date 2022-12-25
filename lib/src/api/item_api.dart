@@ -13,16 +13,13 @@ class ItemDataSource extends DataSource<ItemModel> {
   }
 
   @override
-  Future<void> connect() async {}
-
-  @override
   Future<void> disconnect() async {
     _dio.close();
   }
 
   @override
-  Future<ItemModel?> get(String key) async {
-    final id = int.parse(key);
+  Future<ItemModel?> get(Map<String, dynamic> params) async {
+    final id = params['id'];
 
     final response = await _dio.get<Map<String, dynamic>>(
       [apiBaseUrl, '/item/', id, '.json'].join(),
@@ -39,22 +36,13 @@ class ItemDataSource extends DataSource<ItemModel> {
 
     return ItemModel.fromJson(data);
   }
-
-  @override
-  Future<void> post(ItemModel value) async {}
-
-  @override
-  Future<void> put(String key, ItemModel value) async {}
-
-  @override
-  Future<void> delete(String key) async {}
 }
 
 Future<ItemModel> fetchItem(
   int? id,
   DataSource<ItemModel>? dataSource,
 ) async {
-  final data = await dataSource?.get(id.toString());
+  final data = await dataSource?.get({'id': id});
   return data ?? ItemModel();
 }
 

@@ -1,13 +1,13 @@
 abstract class DataSource<T> {
-  Future<void> connect();
+  Future<void> connect() async {}
 
-  Future<void> disconnect();
+  Future<void> disconnect() async {}
 
-  Future<T?> get(String key);
+  Future<T?> get(Map<String, dynamic> params) async => null;
 
-  Future<void> post(T value);
+  Future<void> post(Map<String, dynamic> params) async {}
 
-  Future<void> put(String key, T value);
+  Future<void> put(Map<String, dynamic> params) async {}
 
-  Future<void> delete(String key);
+  Future<void> delete(Map<String, dynamic> params) async {}
 }

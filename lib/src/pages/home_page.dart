@@ -8,6 +8,10 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
+final topStoryIdsProvider = Provider((ref) {
+  return <int>[];
+});
+
 final itemsProvider = Provider((ref) {
   return <int, ItemModel?>{};
 });
@@ -17,9 +21,14 @@ class HomePage extends HookConsumerWidget {
 
   @override
   Widget build(context, ref) {
+    final topStoryIds = ref.read(topStoryIdsProvider);
+
     final topStories = useTopStoriesQuery();
 
-    final topStoriesIds = topStories.data ?? [];
+    if (topStories.data != null) {
+      topStoryIds.clear();
+      topStoryIds.addAll(topStories.data ?? []);
+    }
 
     final openUrl = useMutation<String>(
       fetcher: (url, _) async {
@@ -46,22 +55,27 @@ class HomePage extends HookConsumerWidget {
         title: const Text('HackerNews'),
         actions: [
           IconButton(
-            onPressed: topStories.invalidate,
-            icon: const Icon(Icons.refresh_outlined),
+            onPressed: isLoading ? null : topStories.invalidate,
+            icon: isLoading
+                ? const SizedBox.square(
+                    dimension: 24,
+                    child: CircularProgressIndicator(),
+                  )
+                : const Icon(Icons.refresh_outlined),
           ),
         ],
       ),
       body: Center(
         child: evaluate(() {
-          if (isLoading) {
+          if (isLoading && topStoryIds.isEmpty) {
             return const CircularProgressIndicator();
           }
 
           return ListView.builder(
             padding: const EdgeInsets.only(bottom: kToolbarHeight * 2),
-            itemCount: topStoriesIds.length,
+            itemCount: topStoryIds.length,
             itemBuilder: (context, index) {
-              final id = topStoriesIds[index];
+              final id = topStoryIds[index];
               return HookBuilder(
                 builder: (context) {
                   final item = useItemQuery(id);

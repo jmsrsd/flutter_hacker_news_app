@@ -44,6 +44,10 @@ class AsyncHook<T> {
   }
 
   void invalidate() {
-    _invalidation.value++;
+    try {
+      _invalidation.value++;
+    } catch (e) {
+      e;
+    }
   }
 }

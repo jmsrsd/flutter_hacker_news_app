@@ -7,6 +7,6 @@ enum Foo {
 
 void main() {
   test('', () {
-    expect([1, 2, 3], [1, 2, 3]);
+    expect(Foo, int);
   });
 }

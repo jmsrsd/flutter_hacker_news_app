@@ -14,15 +14,12 @@ class TopStoriesDataSource extends DataSource<List<int>> {
   }
 
   @override
-  Future<void> connect() async {}
-
-  @override
   Future<void> disconnect() async {
     _dio.close();
   }
 
   @override
-  Future<List<int>?> get(String key) async {
+  Future<List<int>?> get(Map<String, dynamic> params) async {
     try {
       final response = await _dio.get<List<dynamic>>(
         [apiBaseUrl, '/topstories.json'].join(),
@@ -38,22 +35,13 @@ class TopStoriesDataSource extends DataSource<List<int>> {
       return null;
     }
   }
-
-  @override
-  Future<void> post(List<int> value) async {}
-
-  @override
-  Future<void> put(String key, List<int> value) async {}
-
-  @override
-  Future<void> delete(String key) async {}
 }
 
 Future<List<int>> fetchTopStories(
   void input,
   DataSource<List<int>>? dataSource,
 ) async {
-  final data = await dataSource?.get('');
+  final data = await dataSource?.get({});
   return data ?? [];
 }
 
