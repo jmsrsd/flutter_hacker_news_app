@@ -2,10 +2,10 @@ import 'package:flutter_hacker_news_app/src/types/data_source.dart';
 import 'package:flutter_hacker_news_app/src/types/fetcher.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 
-MutationHook<T?> useMutation<T>(
+MutationHook<T?> useMutation<T>({
   DataSource<void>? dataSource,
-  Fetcher<T?, void> fetcher,
-) {
+  required Fetcher<T?, void> fetcher,
+}) {
   final loading = useState(0);
   final isLoading = loading.value > 0;
 

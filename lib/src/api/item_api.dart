@@ -51,7 +51,7 @@ class ItemDataSource extends DataSource<ItemModel> {
 }
 
 Future<ItemModel> fetchItem(
-  int id,
+  int? id,
   DataSource<ItemModel>? dataSource,
 ) async {
   final data = await dataSource?.get(id.toString());
@@ -60,8 +60,8 @@ Future<ItemModel> fetchItem(
 
 AsyncHook<ItemModel> useItemQuery(int id) {
   return useQuery(
-    id,
-    ItemDataSource(dio: Dio()),
-    fetchItem,
+    input: id,
+    dataSource: ItemDataSource(dio: Dio()),
+    fetcher: fetchItem,
   );
 }

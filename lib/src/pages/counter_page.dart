@@ -1,45 +1,47 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hacker_news_app/src/hooks/mutation_hook.dart';
 import 'package:flutter_hacker_news_app/src/hooks/query_hook.dart';
-import 'package:flutter_hacker_news_app/src/types/data_source.dart';
+import 'package:flutter_hacker_news_app/src/utils/delay.dart';
+import 'package:flutter_hacker_news_app/src/utils/evalutate.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
-int _counter = 0;
+final counterProvder = StateProvider((ref) {
+  return 0;
+});
 
 class CounterPage extends HookConsumerWidget {
   const CounterPage({super.key});
 
   @override
   Widget build(context, ref) {
-    final counterQuery = useQuery(
-      _counter,
-      DefaultDataSource(),
-      (input, dataSource) async {
-        await Future.delayed(const Duration(milliseconds: 700));
+    final counterController = ref.read(counterProvder.notifier);
+
+    final counter = useQuery(
+      input: counterController.state,
+      fetcher: (input, _) async {
+        await delay(700);
         return input;
       },
     );
 
     final incrementCounter = useMutation<void>(
-      DefaultDataSource(),
-      (input, dataSource) async {
-        await Future.delayed(const Duration(milliseconds: 700));
-        _counter++;
-        counterQuery.invalidate();
+      fetcher: (_, __) async {
+        await delay(700);
+        counterController.update((state) => state + 1);
+        counter.invalidate();
       },
     );
 
     final resetCounter = useMutation<void>(
-      DefaultDataSource(),
-      (input, fetcher) async {
-        await Future.delayed(const Duration(milliseconds: 700));
-        _counter = 0;
-        counterQuery.invalidate();
+      fetcher: (_, __) async {
+        await delay(700);
+        counterController.update((state) => 0);
+        counter.invalidate();
       },
     );
 
     final isLoading = [
-      counterQuery.isLoading,
+      counter.isLoading,
       incrementCounter.isLoading,
       resetCounter.isLoading,
     ].reduce((v, e) => v || e);
@@ -49,21 +51,26 @@ class CounterPage extends HookConsumerWidget {
         title: const Text('Counter'),
       ),
       body: Center(
-        child: isLoading
-            ? const CircularProgressIndicator()
-            : Column(
-                mainAxisSize: MainAxisSize.min,
-                children: [
-                  Text(
-                    counterQuery.data.toString(),
-                    style: Theme.of(context).textTheme.headline1,
-                  ),
-                  ElevatedButton(
-                    onPressed: resetCounter.mutate,
-                    child: const Text('RESET'),
-                  ),
-                ],
+        child: evaluate(() {
+          if (isLoading) {
+            return const CircularProgressIndicator();
+          }
+
+          return Column(
+            mainAxisSize: MainAxisSize.min,
+            children: [
+              Text(
+                counter.data.toString(),
+                style: Theme.of(context).textTheme.headline1,
               ),
+              const SizedBox(height: 16),
+              ElevatedButton(
+                onPressed: resetCounter.mutate,
+                child: const Text('RESET'),
+              ),
+            ],
+          );
+        }),
       ),
       floatingActionButton: FloatingActionButton(
         onPressed: incrementCounter.mutate,

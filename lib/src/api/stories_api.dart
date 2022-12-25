@@ -59,8 +59,7 @@ Future<List<int>> fetchTopStories(
 
 AsyncHook<List<int>> useTopStoriesQuery() {
   return useQuery(
-    null,
-    TopStoriesDataSource(dio: Dio()),
-    fetchTopStories,
+    dataSource: TopStoriesDataSource(dio: Dio()),
+    fetcher: fetchTopStories,
   );
 }

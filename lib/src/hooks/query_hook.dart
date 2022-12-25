@@ -3,11 +3,11 @@ import 'package:flutter_hacker_news_app/src/types/fetcher.dart';
 
 import 'async_hook.dart';
 
-AsyncHook<TO> useQuery<TI, TO>(
-  TI input,
+AsyncHook<TO> useQuery<TI, TO>({
+  TI? input,
   DataSource<TO>? dataSource,
-  Fetcher<TI, TO> fetcher,
-) {
+  required Fetcher<TI, TO> fetcher,
+}) {
   return useAsync<TO>([input, fetcher], () async {
     await dataSource?.connect();
     final output = await fetcher(input, dataSource);

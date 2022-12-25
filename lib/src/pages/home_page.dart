@@ -8,6 +8,10 @@ import 'package:flutter_hooks/flutter_hooks.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 import 'package:url_launcher/url_launcher_string.dart';
 
+final itemsProvider = Provider((ref) {
+  return <int, ItemModel?>{};
+});
+
 class HomePage extends HookConsumerWidget {
   const HomePage({super.key});
 
@@ -17,13 +21,15 @@ class HomePage extends HookConsumerWidget {
 
     final topStoriesIds = topStories.data ?? [];
 
-    final openUrl = useMutation<String>(null, (url, dataSource) async {
-      if (url == null) {
-        return;
-      }
+    final openUrl = useMutation<String>(
+      fetcher: (url, _) async {
+        if (url == null) {
+          return;
+        }
 
-      await launchUrlString(url, mode: LaunchMode.externalApplication);
-    });
+        await launchUrlString(url, mode: LaunchMode.externalApplication);
+      },
+    );
 
     final isLoading = [
       topStories.isLoading,
@@ -33,7 +39,7 @@ class HomePage extends HookConsumerWidget {
       return e || v;
     });
 
-    final items = <int, ItemModel?>{};
+    final items = ref.read(itemsProvider);
 
     return Scaffold(
       appBar: AppBar(
