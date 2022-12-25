@@ -1,8 +1,7 @@
 import 'package:flutter/material.dart';
-import 'package:flutter_hacker_news_app/src/api/item/item_query.dart';
-import 'package:flutter_hacker_news_app/src/api/stories/stories_query.dart';
+import 'package:flutter_hacker_news_app/src/api/item_api.dart';
+import 'package:flutter_hacker_news_app/src/api/stories_api.dart';
 import 'package:flutter_hacker_news_app/src/hooks/mutation_hook.dart';
-import 'package:flutter_hacker_news_app/src/hooks/query_hook.dart';
 import 'package:flutter_hacker_news_app/src/types/item/item_model.dart';
 import 'package:flutter_hacker_news_app/src/utils/evalutate.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
@@ -14,11 +13,11 @@ class HomePage extends HookConsumerWidget {
 
   @override
   Widget build(context, ref) {
-    final topStories = useQuery(null, topStoriesQuery);
+    final topStories = useTopStoriesQuery();
 
     final topStoriesIds = topStories.data ?? [];
 
-    final openUrl = useMutation<String>((url, fetcher) async {
+    final openUrl = useMutation<String>(null, (url, dataSource) async {
       if (url == null) {
         return;
       }
@@ -59,7 +58,8 @@ class HomePage extends HookConsumerWidget {
               final id = topStoriesIds[index];
               return HookBuilder(
                 builder: (context) {
-                  final item = useQuery(id, itemQuery);
+                  final item = useItemQuery(id);
+
                   items[index] = item.data ?? items[index];
                   var data = items[index];
 
@@ -123,10 +123,11 @@ class HomePage extends HookConsumerWidget {
                             return null;
                           }
 
-                          final date =
-                              DateTime.fromMillisecondsSinceEpoch(time * 1000);
+                          final date = DateTime.fromMillisecondsSinceEpoch(
+                            time * 1000,
+                          );
 
-                          final year = '${date.year}'.padLeft(2, '0');
+                          final year = '${date.year}'.padLeft(4, '0');
                           final month = '${date.month}'.padLeft(2, '0');
                           final day = '${date.day}'.padLeft(2, '0');
 

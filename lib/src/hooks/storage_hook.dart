@@ -5,14 +5,14 @@ import 'package:hive_flutter/hive_flutter.dart';
 import 'package:uuid/uuid.dart';
 
 import '../utils/value_coder.dart';
-import 'swr_hook.dart';
+import 'async_hook.dart';
 
 typedef StorageLoader = Box<String>;
 
-SWRHook<StorageHook<T>> useStorage<T>(String key, ValueCoder<T> coder) {
+AsyncHook<StorageHook<T>> useStorage<T>(String key, ValueCoder<T> coder) {
   final reloading = useState(0);
 
-  return useSWR([key, reloading.value], () async {
+  return useAsync([key, reloading.value], () async {
     final loader = await Hive.openBox<String>(key);
 
     return StorageHook<T>(

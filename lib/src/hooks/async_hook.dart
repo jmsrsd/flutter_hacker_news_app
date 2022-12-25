@@ -2,48 +2,48 @@ import 'package:flutter/widgets.dart';
 import 'package:flutter_hacker_news_app/src/utils/is_equatable.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 
-SWRHook<T> useSWR<T>(List keys, Future<T> Function() fetcher) {
+AsyncHook<T> useAsync<T>(List keys, Future<T> Function() fetcher) {
   final invalidation = useState(0);
 
   keys = [...keys, invalidation.value].where((key) {
     return isEquatable(key);
   }).toList();
 
-  final loader = useFuture(
+  final future = useFuture(
     useMemoized(fetcher, keys),
   );
 
-  return SWRHook(
+  return AsyncHook(
     invalidation: invalidation,
-    loader: loader,
+    future: future,
   );
 }
 
-class SWRHook<T> {
+class AsyncHook<T> {
   late final ValueNotifier<int> _invalidation;
-  late final AsyncSnapshot<T> _loader;
+  late final AsyncSnapshot<T> _future;
 
-  SWRHook({
+  AsyncHook({
     required ValueNotifier<int> invalidation,
-    required AsyncSnapshot<T> loader,
+    required AsyncSnapshot<T> future,
   }) {
     _invalidation = invalidation;
-    _loader = loader;
+    _future = future;
   }
 
   bool get isLoading {
-    return _loader.connectionState != ConnectionState.done;
+    return _future.connectionState != ConnectionState.done;
   }
 
   T? get data {
-    return _loader.data;
+    return _future.data;
   }
 
   Object? get error {
-    return _loader.error;
+    return _future.error;
   }
 
   void invalidate() {
-    _invalidation.value += 1;
+    _invalidation.value++;
   }
 }

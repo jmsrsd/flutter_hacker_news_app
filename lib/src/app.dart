@@ -1,8 +1,7 @@
-import 'dart:math';
-
 import 'package:flutter/material.dart';
 import 'package:flutter_hacker_news_app/src/pages/home_page.dart';
 
+import 'components/minimum_size_layout.dart';
 import 'styles.dart' as styles;
 
 class MyApp extends StatelessWidget {
@@ -15,36 +14,10 @@ class MyApp extends StatelessWidget {
       title: 'HackerNews',
       theme: styles.theme,
       builder: (context, child) {
-        return LayoutBuilder(builder: (context, constraints) {
-          Widget useSingleChildScrollView({
-            required Axis scrollDirection,
-            required Widget? child,
-          }) {
-            return SingleChildScrollView(
-              physics: const NeverScrollableScrollPhysics(),
-              scrollDirection: scrollDirection,
-              padding: EdgeInsets.zero,
-              child: SizedBox.fromSize(
-                size: Size(
-                  max(constraints.maxWidth, kToolbarHeight * 7),
-                  max(constraints.maxHeight, kToolbarHeight * (7 * 4.0) / 3.0),
-                ),
-                child: child,
-              ),
-            );
-          }
-
-          return Align(
-            alignment: Alignment.topLeft,
-            child: useSingleChildScrollView(
-              scrollDirection: Axis.horizontal,
-              child: useSingleChildScrollView(
-                scrollDirection: Axis.vertical,
-                child: child,
-              ),
-            ),
-          );
-        });
+        return MinimumSizeLayout(
+          minimumSize: const Size(360, 480),
+          child: child,
+        );
       },
       home: const HomePage(),
     );

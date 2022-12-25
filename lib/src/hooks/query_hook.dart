@@ -1,22 +1,17 @@
-import 'package:dio/dio.dart';
+import 'package:flutter_hacker_news_app/src/types/data_source.dart';
+import 'package:flutter_hacker_news_app/src/types/fetcher.dart';
 
-import 'swr_hook.dart';
+import 'async_hook.dart';
 
-typedef QueryFetcher = Dio;
-
-typedef Query<TInput, TResponse> = Future<TResponse> Function(
-  TInput input,
-  QueryFetcher fetcher,
-);
-
-SWRHook<TResponse> useQuery<TInput, TResponse>(
-  TInput input,
-  Query<TInput, TResponse> query,
+AsyncHook<TO> useQuery<TI, TO>(
+  TI input,
+  DataSource<TO>? dataSource,
+  Fetcher<TI, TO> fetcher,
 ) {
-  return useSWR<TResponse>([input, query], () async {
-    final fetcher = QueryFetcher();
-    final response = await query(input, fetcher);
-    fetcher.close();
-    return response;
+  return useAsync<TO>([input, fetcher], () async {
+    await dataSource?.connect();
+    final output = await fetcher(input, dataSource);
+    await dataSource?.disconnect();
+    return output;
   });
 }

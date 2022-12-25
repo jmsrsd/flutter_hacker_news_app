@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
 import 'package:flutter_hacker_news_app/src/hooks/mutation_hook.dart';
 import 'package:flutter_hacker_news_app/src/hooks/query_hook.dart';
+import 'package:flutter_hacker_news_app/src/types/data_source.dart';
 import 'package:hooks_riverpod/hooks_riverpod.dart';
 
 int _counter = 0;
@@ -12,23 +13,30 @@ class CounterPage extends HookConsumerWidget {
   Widget build(context, ref) {
     final counterQuery = useQuery(
       _counter,
-      (input, fetcher) async {
+      DefaultDataSource(),
+      (input, dataSource) async {
         await Future.delayed(const Duration(milliseconds: 700));
         return input;
       },
     );
 
-    final incrementCounter = useMutation((input, fetcher) async {
-      await Future.delayed(const Duration(milliseconds: 700));
-      _counter++;
-      counterQuery.invalidate();
-    });
+    final incrementCounter = useMutation<void>(
+      DefaultDataSource(),
+      (input, dataSource) async {
+        await Future.delayed(const Duration(milliseconds: 700));
+        _counter++;
+        counterQuery.invalidate();
+      },
+    );
 
-    final resetCounter = useMutation((input, fetcher) async {
-      await Future.delayed(const Duration(milliseconds: 700));
-      _counter = 0;
-      counterQuery.invalidate();
-    });
+    final resetCounter = useMutation<void>(
+      DefaultDataSource(),
+      (input, fetcher) async {
+        await Future.delayed(const Duration(milliseconds: 700));
+        _counter = 0;
+        counterQuery.invalidate();
+      },
+    );
 
     final isLoading = [
       counterQuery.isLoading,

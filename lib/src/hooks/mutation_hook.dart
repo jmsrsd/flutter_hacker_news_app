@@ -1,14 +1,11 @@
-import 'package:dio/dio.dart';
+import 'package:flutter_hacker_news_app/src/types/data_source.dart';
+import 'package:flutter_hacker_news_app/src/types/fetcher.dart';
 import 'package:flutter_hooks/flutter_hooks.dart';
 
-typedef MutationFetcher = Dio;
-
-typedef Mutation<T> = Future<void> Function(
-  T? input,
-  MutationFetcher fetcher,
-);
-
-MutationHook<T> useMutation<T>(Mutation<T> mutation) {
+MutationHook<T?> useMutation<T>(
+  DataSource<void>? dataSource,
+  Fetcher<T?, void> fetcher,
+) {
   final loading = useState(0);
   final isLoading = loading.value > 0;
 
@@ -19,11 +16,11 @@ MutationHook<T> useMutation<T>(Mutation<T> mutation) {
         return;
       }
 
-      final fetcher = MutationFetcher();
+      await dataSource?.connect();
       loading.value++;
-      await mutation(input, fetcher);
+      await fetcher(input, dataSource);
       loading.value--;
-      fetcher.close();
+      await dataSource?.disconnect();
     },
   );
 }
